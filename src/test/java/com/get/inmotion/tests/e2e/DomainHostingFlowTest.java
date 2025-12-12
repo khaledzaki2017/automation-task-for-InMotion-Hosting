@@ -29,7 +29,7 @@ public class DomainHostingFlowTest  extends BaseTest {
         String domainName = "myautomationtest123.com";
         domainPage.searchDomain(domainName);
 
-        // Screenshot
+        // Screenshot 1
         ScreenshotHelper.takeScreenshot(driver, "Domain_Search_Result");
 
         // Validate domain availability
@@ -47,6 +47,10 @@ public class DomainHostingFlowTest  extends BaseTest {
 
         // STEP 5: Select Power Plan
         hosting.selectPowerPlan();
+
+        // Screenshot 2
+        ScreenshotHelper.takeScreenshot(driver, "Hosting_PowerPlan_Selected");
+
         hosting.addToCart();
 
         // Go to cart
@@ -55,7 +59,7 @@ public class DomainHostingFlowTest  extends BaseTest {
         // Verify domain + hosting exist
         Assert.assertTrue(cart.getCartItems().size() >= 2, "Domain + hosting should be in the cart.");
 
-        // Screenshot cart
+        // Screenshot 3 cart
         ScreenshotHelper.takeScreenshot(driver, "CartView");
 
         // Save total price before refresh
@@ -69,11 +73,20 @@ public class DomainHostingFlowTest  extends BaseTest {
 
         // STEP 7: Remove domain
         cart.removeItem();
+
+        // Screenshot 4
+        ScreenshotHelper.takeScreenshot(driver, "Cart_After_Domain_Removal");
+
         Assert.assertFalse(cart.getCartItems().isEmpty(), "Domain removed; hosting remains.");
 
         // STEP 8: Update hosting plan
         home.goToHostingPage();
         hosting.selectLaunchPlan();
+
+        // Screenshot 4
+        ScreenshotHelper.takeScreenshot(driver, "Hosting_LaunchPlan_Selected");
+
+
         hosting.addToCart();
         hosting.goToCart();
 
@@ -82,6 +95,9 @@ public class DomainHostingFlowTest  extends BaseTest {
         // STEP 9: Negative test - invalid domain
         home.goToDomainNamesSection();
         domainPage.searchDomain("google.com");
+
+        //Screenshot 5
+        ScreenshotHelper.takeScreenshot(driver, "Negative_Domain_Search");
 
         Assert.assertFalse(domainPage.isDomainAvailable(), "google.com should NOT be available");
 
