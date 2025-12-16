@@ -1,43 +1,68 @@
 package com.get.inmotion.pages;
 
+import com.get.inmotion.helpers.WaitHelper;
+import org.openqa.selenium.*;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import java.util.List;
 
 public class DomainSearchPage {
 
-    private WebDriver driver;
+    private final WebDriver driver;
 
-    // On the /domains page, the search input and button are likely present
-    private By searchInput = By.xpath("//input[@type='search' or contains(@placeholder,'Search')]");
-    private By searchButton = By.xpath("//button[contains(text(),'Search') or contains(@class,'search')]");
+    private final By searchInput = By.id("domain_search_domain");
+    private final By searchButton =
+            By.xpath("//button[contains(text(),'Search')]");
+    // ===== UNAVAILABLE DOMAIN LOCATORS =====
 
-    // Results area
-    private By availableLabel = By.xpath("//*[contains(text(),'available')]");
-    private By priceLabel = By.xpath("//span[contains(text(),'$')]");
-    private By addToCartBtn = By.xpath("//button[contains(text(),'Add to Cart') or contains(text(),'Register')]");
+    private final By unavailableMessage =
+            By.xpath("//span[contains(text(),'is taken')]");
+
+    private final By suggestedDomainRows =
+            By.xpath("//div[starts-with(@id,'tld')]");
+
+    private final By suggestedDomainName =
+            By.xpath(".//div[contains(@class,'ctw-col-span-3')]");
+
+    private final By suggestedDomainPrice =
+            By.xpath(".//span[contains(text(),'$')]");
+
+    private final By unavailableButton =
+            By.xpath(".//button[@disabled]//span[text()='Unavailable']");
 
     public DomainSearchPage(WebDriver driver) {
         this.driver = driver;
     }
 
+    public void waitForPageLoaded() {
+        WaitHelper.waitForVisible(driver, searchInput);
+    }
+
     public void searchDomain(String domain) {
-        driver.findElement(searchInput).clear();
-        driver.findElement(searchInput).sendKeys(domain);
-        driver.findElement(searchButton).click();
+        WebElement input = WaitHelper.waitForVisible(driver, searchInput);
+        input.clear();
+        input.sendKeys(domain);
+        WaitHelper.waitForClickable(driver, searchButton).click();
+    }
+    /**
+     * Verify unavailable message is displayed
+     * Example: "google.com is taken."
+     */
+    public boolean isUnavailableMessageDisplayedFor(String domain) {
+        WebElement message =
+                WaitHelper.waitForVisible(driver, unavailableMessage);
+
+        return message.getText().contains(domain)
+                && message.getText().contains("taken");
     }
 
-    public boolean isDomainAvailable() {
-        return !driver.findElements(availableLabel).isEmpty();
+    /**
+     * Get count of suggested alternative domains
+     */
+    public int getSuggestedDomainsCount() {
+        List<WebElement> rows =
+                WaitHelper.waitForAllVisible(driver, suggestedDomainRows);
+
+        return rows.size();
     }
 
-    public String getDomainPrice() {
-        WebElement price = driver.findElement(priceLabel);
-        return price.getText();
-    }
-
-    public void addToCart() {
-        driver.findElement(addToCartBtn).click();
-    }
 }

@@ -1,34 +1,76 @@
 package com.get.inmotion.pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import com.get.inmotion.helpers.WaitHelper;
+import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.JavascriptExecutor;
 
 public class HomePage {
 
     private WebDriver driver;
 
-    // Current navigation menu - using visible link text
+    // Locators
     private By domainNamesLink = By.linkText("Domain Names");
-    private By hostingMenu = By.xpath("//a[contains(text(),'Hosting')]");
+    private By allHostingMenu = By.xpath("//a[@title='View All Web Hosting']//span[@class='subnav-title']");
+    private By hostingMenu=By.xpath("//a[@id='allHostingDropDown']");
+    private By acceptCookiesBtn = By.id("onetrust-accept-btn-handler");
 
     public HomePage(WebDriver driver) {
         this.driver = driver;
     }
 
     /**
-     * Navigate to the Domain Search / Domain Names section
+     * Handle Cookie Banner
+     */
+    public void acceptCookiesIfVisible() {
+        try {
+            WebElement btn = WaitHelper.waitForClickable(driver, acceptCookiesBtn);
+            btn.click();
+
+            // Wait for cookie banner to disappear
+            WaitHelper.waitForInvisible(driver, acceptCookiesBtn);
+        } catch (Exception ignored) {
+            // Cookie banner not shown
+        }
+    }
+
+
+    /**
+     * Navigate to "Domain Names" page
      */
     public void goToDomainNamesSection() {
-        WebElement domainSection = driver.findElement(domainNamesLink);
-        domainSection.click();
+        acceptCookiesIfVisible();
+
+        // Ensure the element is clickable
+        WebElement domainLink = WaitHelper.waitForClickable(driver, domainNamesLink);
+
+        // Scroll into view to avoid intercept by overlays
+        scrollIntoView(domainLink);
+
+        domainLink.click();
+    }
+
+    public void selectHostingMenu(){
+
+
+// 2. Hover over the menu (common for dropdowns)
+        WebElement hostingElement = driver.findElement(hostingMenu);
+
+        Actions actions = new Actions(driver);
+        actions.moveToElement(hostingElement).perform();
+        hostingElement.click();
+
+// 3. Click "View All Web Hosting" option
+        WebElement allHostingLink = WaitHelper.waitForClickable(driver, allHostingMenu);
+        allHostingLink.click();
     }
 
     /**
-     * Navigate to the Hosting section
-     */
-    public void goToHostingPage() {
-        driver.findElement(hostingMenu).click();
+     * Utility: Scroll into view (prevents click interception)
+//     */
+    private void scrollIntoView(WebElement el) {
+        try {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView({block:'center'});", el);
+        } catch (Exception ignored) {}
     }
 }

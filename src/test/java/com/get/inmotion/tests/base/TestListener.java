@@ -2,7 +2,7 @@ package com.get.inmotion.tests.base;
 
 
 import com.get.inmotion.driver.DriverFactory;
-import com.get.inmotion.utils.ScreenshotHelper;
+import com.get.inmotion.helpers.ScreenshotHelper;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
 

@@ -1,37 +1,81 @@
 package com.get.inmotion.pages;
 
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-
+import com.get.inmotion.helpers.WaitHelper;
+import org.openqa.selenium.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class CartPage {
 
-    private WebDriver driver;
+    private final WebDriver driver;
 
-    private By cartItemElements = By.cssSelector(".cart-item, .product-listing"); // accepts multiple patterns
-    private By removeItemBtn = By.xpath("//button[contains(text(),'Remove') or contains(text(),'Delete')]");
+    // ===== STABLE ANCHORS =====
+    private final By orderSummaryTitle =
+            By.xpath("//span[normalize-space()='Order Summary']");
 
-    private By totalPriceLabel = By.xpath("//*[contains(text(),'Total') and contains(text(),'$')]");
+    private final By cartRows =
+            By.cssSelector("table.mat-table tr.mat-row");
+
+    private final By removeIcon =
+            By.cssSelector("mat-icon.remove-cart-item");
+
+    private final By totalPrice =
+            By.xpath(  "//div[contains(@class,'ctw-font-bold')]" +
+                    "[.//text()[normalize-space()='Total']]" +
+                    "/span[contains(@class,'ctw-float-right')]");
 
     public CartPage(WebDriver driver) {
         this.driver = driver;
     }
 
-    public List<WebElement> getCartItems() {
-        return driver.findElements(cartItemElements);
+    // ===== PAGE SYNC =====
+    public void waitForCartLoaded() {
+        WaitHelper.waitForDomReady(driver);
+        WaitHelper.waitForUrlContains(driver, "#complete");
+        WaitHelper.waitForVisible(driver, orderSummaryTitle);
+        WaitHelper.waitForPresent(driver, cartRows);
     }
 
-    public void removeItem() {
-        driver.findElement(removeItemBtn).click();
+    // ===== CART DATA =====
+    public List<String> getCartItems() {
+        waitForCartLoaded();
+        return driver.findElements(cartRows)
+                .stream()
+                .map(WebElement::getText)
+                .collect(Collectors.toList());
+    }
+
+    public boolean isItemPresent(String text) {
+        return getCartItems()
+                .stream()
+                .anyMatch(item -> item.contains(text));
+    }
+
+    public int getItemsCount() {
+        return driver.findElements(cartRows).size();
     }
 
     public String getTotalPrice() {
-        return driver.findElement(totalPriceLabel).getText();
+        waitForCartLoaded();
+        return WaitHelper.waitForVisible(driver, totalPrice).getText();
+    }
+
+    // ===== ACTIONS =====
+    public void removeItemContaining(String text) {
+        waitForCartLoaded();
+
+        for (WebElement row : driver.findElements(cartRows)) {
+            if (row.getText().contains(text)) {
+                row.findElement(removeIcon).click();
+                WaitHelper.waitForDomReady(driver);
+                return;
+            }
+        }
+        throw new AssertionError("Item not found in cart: " + text);
     }
 
     public void refresh() {
         driver.navigate().refresh();
+        waitForCartLoaded();
     }
 }

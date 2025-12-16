@@ -1,4 +1,4 @@
-package com.get.inmotion.utils;
+package com.get.inmotion.helpers;
 
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;

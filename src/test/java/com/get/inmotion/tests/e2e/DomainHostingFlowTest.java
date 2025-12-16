@@ -1,105 +1,150 @@
 package com.get.inmotion.tests.e2e;
 
-import com.get.inmotion.pages.CartPage;
-import com.get.inmotion.pages.DomainSearchPage;
-import com.get.inmotion.pages.HomePage;
-import com.get.inmotion.pages.HostingPage;
+import com.get.inmotion.helpers.CommonHelper;
+import com.get.inmotion.helpers.ScreenshotHelper;
+import com.get.inmotion.helpers.WaitHelper;
+import com.get.inmotion.pages.*;
 import com.get.inmotion.tests.base.BaseTest;
-import com.get.inmotion.utils.ScreenshotHelper;
-import com.get.inmotion.utils.WaitHelper;
 import org.testng.Assert;
+import org.testng.annotations.Test;
 
-public class DomainHostingFlowTest  extends BaseTest {
-    public void testDomainHostingFlow(){
-        WaitHelper wait=new WaitHelper(driver);
-        // PAGE OBJECTS
+import java.math.BigDecimal;
+
+public class DomainHostingFlowTest extends BaseTest {
+
+    @Test
+    public void testDomainHostingFlow() {
+
+        String domain = "myautomationtest123.com";
+        String webHostig = "- Web Hosting";
+
         HomePage home = new HomePage(driver);
         DomainSearchPage domainPage = new DomainSearchPage(driver);
-        HostingPage hosting = new HostingPage(driver);
+        CheckoutPage ampPage = new CheckoutPage(driver);
+        HostingPage hostingPage = new HostingPage(driver);
         CartPage cart = new CartPage(driver);
 
-        // STEP 1: Verify title
-        wait.waitForPageTitle("InMotion Hosting");
-        Assert.assertTrue(driver.getTitle().contains("InMotion"), "Homepage title mismatch!");
+        // ===== STEP 1: HOME =====
+        WaitHelper.waitForTitleContains(driver, "InMotion Hosting");
+        Assert.assertTrue(driver.getTitle().contains("InMotion"));
 
-        // STEP 2: Navigate to Domain Names
+        // ===== STEP 2: DOMAIN SEARCH =====
         home.goToDomainNamesSection();
+        domainPage.waitForPageLoaded();
+        domainPage.searchDomain(domain);
 
-        // STEP 3: Search for domain
-        String domainName = "myautomationtest123.com";
-        domainPage.searchDomain(domainName);
+        ScreenshotHelper.takeScreenshot(driver, "Domain_Search");
 
-        // Screenshot 1
-        ScreenshotHelper.takeScreenshot(driver, "Domain_Search_Result");
+        // ===== STEP 3: AMP DOMAIN =====
+        ampPage.waitForCheckoutCompleteUrl();
+//        ampPage.waitForDomainStep();
+        // Verify domain availability
+        Assert.assertTrue(ampPage.isDomainAvailable(domain), "Domain is not available: " + domain);
 
-        // Validate domain availability
-        Assert.assertTrue(domainPage.isDomainAvailable(), "Domain should be available");
+        // Get the domain price and select it
+        String priceOnSearch = ampPage.getDomainPriceAndSelect(domain, true);
+        ampPage.waitForCheckoutCompleteUrl();
+        ScreenshotHelper.takeScreenshot(driver, "Checkout_Complete");
 
-        // Save price
-        String domainPrice = domainPage.getDomainPrice();
-        Assert.assertNotNull(domainPrice);
+        Assert.assertEquals(ampPage.getDisplayedDomain(), domain);
+        String priceOnCheckout = ampPage.getDomainPrice();
+        Assert.assertTrue(ampPage.getDomainPrice().contains("$"));
 
-        // Add domain to cart
-        domainPage.addToCart();
+        // Assert the price matches
+        BigDecimal normPriceOnSearch = CommonHelper.normalizePrice(priceOnSearch);
+        BigDecimal normPriceOnCheckout = CommonHelper.normalizePrice(priceOnCheckout);
+        Assert.assertEquals(normPriceOnSearch, normPriceOnCheckout);
 
-        // STEP 4: Navigate to hosting
-        home.goToHostingPage();
+        // ampPage.addDomainToCart();
+        driver.navigate().to("https://www.inmotionhosting.com/");
 
-        // STEP 5: Select Power Plan
-        hosting.selectPowerPlan();
+        // ===== STEP 4: HOSTING SELECTION =====
+        home.selectHostingMenu();
+        hostingPage.verifyWebHostingPageUrl();
+        hostingPage.selectSharedHostingPlan();
 
-        // Screenshot 2
-        ScreenshotHelper.takeScreenshot(driver, "Hosting_PowerPlan_Selected");
+        hostingPage.selectPremiumSwitcher();
+        hostingPage.selectPowerSharedPlan();
+        //        hostingPage.selectPowerPlan();
+        //        hostingPage.selectPowerSharedPlan();
 
-        hosting.addToCart();
+        ampPage.waitForDomainUrl();
+        //        ampPage.ensurePurchaseNewDomainSelected();
+        ampPage.waitForDomainStepReady();
+        ampPage.enterDomainNameJSHumanLike("myautomationtest123.com");
 
-        // Go to cart
-        hosting.goToCart();
+        ampPage.clickSearchDomains();
+        ampPage.waitForSearchActionToComplete();
 
-        // Verify domain + hosting exist
-        Assert.assertTrue(cart.getCartItems().size() >= 2, "Domain + hosting should be in the cart.");
+        ampPage.waitForCheckoutCompleteUrl();
 
-        // Screenshot 3 cart
-        ScreenshotHelper.takeScreenshot(driver, "CartView");
+        ScreenshotHelper.takeScreenshot(driver, "Cart_With_Domain_And_Hosting");
 
-        // Save total price before refresh
-        String priceBeforeRefresh = cart.getTotalPrice();
+        // ===== STEP 5: CART VERIFICATION =====
+        //        hostingPage.goToCart();
+        Assert.assertTrue(cart.isItemPresent(domain));
 
-        // STEP 6: Refresh cart
+        String totalBefore = cart.getTotalPrice();
+        System.out.println("Total Price: " + totalBefore);
+
+        // ===== STEP 6: REFRESH =====
         cart.refresh();
+        Assert.assertEquals(cart.getTotalPrice(), totalBefore);
 
-        // Validate items persisted
-        Assert.assertEquals(cart.getTotalPrice(), priceBeforeRefresh);
+        // ===== STEP 7: REMOVE PLAN =====
+        cart.removeItemContaining(webHostig);
+        ScreenshotHelper.takeScreenshot(driver, "Remove_Plan");
 
-        // STEP 7: Remove domain
-        cart.removeItem();
+        Assert.assertFalse(cart.isItemPresent(webHostig));
 
-        // Screenshot 4
-        ScreenshotHelper.takeScreenshot(driver, "Cart_After_Domain_Removal");
+        // ===== STEP 8: CHANGE HOSTING PLAN =====
+        driver.navigate().to("https://www.inmotionhosting.com/shared-hosting");
 
-        Assert.assertFalse(cart.getCartItems().isEmpty(), "Domain removed; hosting remains.");
+        hostingPage.selectStarterSwitcher();
+        hostingPage.selectLaunchPlan();
+        ampPage.waitForDomainStepReady();
+        ampPage.enterDomainNameJSHumanLike("myautomationtest123.com");
 
-        // STEP 8: Update hosting plan
-        home.goToHostingPage();
-        hosting.selectLaunchPlan();
+        ampPage.clickSearchDomains();
+        ampPage.waitForSearchActionToComplete();
 
-        // Screenshot 4
-        ScreenshotHelper.takeScreenshot(driver, "Hosting_LaunchPlan_Selected");
+        ampPage.waitForCheckoutCompleteUrl();
+//        hostingPage.addToCart();
+//        hostingPage.goToCart();
+        Assert.assertTrue(cart.getItemsCount() >= 1);
+
+        Assert.assertTrue(cart.isItemPresent("Launch"));
+        ScreenshotHelper.takeScreenshot(driver, "Cart_With_Updated_Hosting_Plan");
 
 
-        hosting.addToCart();
-        hosting.goToCart();
+    }
 
-        Assert.assertFalse(cart.getCartItems().isEmpty(), "New hosting plan updated.");
+    @Test
+    public void testDomainInvalidDomainSearch() {
 
-        // STEP 9: Negative test - invalid domain
+        String takenDomain = "google.com";
+
+        DomainSearchPage domainSearchPage = new DomainSearchPage(driver);
+        HomePage home = new HomePage(driver);
+        // ===== STEP 1: HOME =====
+        WaitHelper.waitForTitleContains(driver, "InMotion Hosting");
+        Assert.assertTrue(driver.getTitle().contains("InMotion"));
+
+        // ===== STEP 2: DOMAIN SEARCH =====
         home.goToDomainNamesSection();
-        domainPage.searchDomain("google.com");
+        domainSearchPage.waitForPageLoaded();
+        domainSearchPage.searchDomain(takenDomain);
+        // ====== STEP 3: Validate Invalid Domain Search ======
+        Assert.assertTrue(
+                domainSearchPage.isUnavailableMessageDisplayedFor(takenDomain),
+                "Unavailable message not shown for taken domain"
+        );
 
-        //Screenshot 5
-        ScreenshotHelper.takeScreenshot(driver, "Negative_Domain_Search");
-
-        Assert.assertFalse(domainPage.isDomainAvailable(), "google.com should NOT be available");
+        int suggestionsCount = domainSearchPage.getSuggestedDomainsCount();
+        Assert.assertTrue(
+                suggestionsCount > 0,
+                "No alternative domains were suggested"
+        );
 
     }
 }

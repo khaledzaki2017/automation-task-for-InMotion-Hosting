@@ -1,4 +1,0 @@
-baseURL = https://www.inmotionhosting.com/
-browser = chrome
-timeout = 20
-screenshotPath = ./screenshots/

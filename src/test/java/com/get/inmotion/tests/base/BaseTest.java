@@ -1,15 +1,19 @@
 package com.get.inmotion.tests.base;
 
 import com.get.inmotion.driver.DriverFactory;
-import com.get.inmotion.utils.ConfigReader;
+import com.get.inmotion.helpers.ConfigReader;
+import com.get.inmotion.tests.listeners.WebDriverProvider;
 import org.openqa.selenium.WebDriver;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
-public class BaseTest {
+public class BaseTest implements WebDriverProvider {
 
     protected WebDriver driver;
-
+    @Override
+    public WebDriver getDriver() {
+        return driver;
+    }
     @BeforeMethod
     public void setUp() {
         String browser = ConfigReader.get("browser");
