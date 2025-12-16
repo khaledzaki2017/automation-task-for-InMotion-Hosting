@@ -55,6 +55,7 @@ mvn clean test
 
 ```
 ### Watch Video of the Automation Task's Excution  
-[![InMotion Hosting E2E](https://img.youtube.com/vi/-VzmLg_3H0Y/0.jpg)](www.youtube.com)
+## https://www.youtube.com/watch?v=-VzmLg_3H0Y
+[![InMotion Hosting E2E](https://img.youtube.com/vi/-VzmLg_3H0Y/0.jpg)]([www.youtube.com](https://www.youtube.com/watch?v=-VzmLg_3H0Y))
 
 
