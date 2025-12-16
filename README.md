@@ -52,3 +52,9 @@ The automated tests cover the core customer journey:
 ### Run Tests
 ```bash
 mvn clean test
+
+```
+### Watch Video of the Automation Task's Excution  
+[![InMotion Hosting E2E](https://img.youtube.com/vi/-VzmLg_3H0Y/0.jpg)](www.youtube.com)
+
+
